@@ -12,7 +12,7 @@ BLUE="\e[34m"; GREEN="\e[32m"; YELLOW="\e[33m"; RED="\e[31m"; NC="\e[0m"
 GENESIS_URL="https://raw.githubusercontent.com/AirdropLaura/inri-installer/main/genesis.json"
 DATADIR="$HOME/inri"
 
-BOOTNODES="enode://5c7c744a9ac53fdb9e529743208ebd123f11c73d973aa2cf653f3ac1bdf460b6f2a9b2aec23b8f2b9d692d8c898fe0e93dac8d7533db8926924e770969f3a46a@134.199.203.8:30303,enode://f196abde38edd1db5d4208a6823fd9d5ce5823a6730c32739b9f351558f254e8d6d32b6d7a8ca43304cbcfe5c172f4a9a25defacd36eea6f5752f3b4bc01cdf@170.64.222.34:30303"
+BOOTNODES="enode://5c7c744a9ac53fdb9e529743208ebd123f11c73d973aa2cf653f3ac1bdf460b6f2a9b2aec23b8f2b9d692d8c898fe0e93dac8d7533db8926924e770969f3a46a@134.199.203.8:30303,enode://f196abde38edd1db5d4208a6823fd9d5ce5823a6730c32739b9f351558f254e8d6d32b6d7a8ca43304cbcfe5c172f4a9a25defacd36eea6f5752f3b4bc01cd@170.64.222.34:30303"
 
 banner() {
 echo -e "${BLUE}"
