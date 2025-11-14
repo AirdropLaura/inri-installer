@@ -32,12 +32,10 @@ deps() {
 }
 
 install_geth() {
-    echo -e "${GREEN}[+] Installing Geth...${NC}"
-    wget -q https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-latest.tar.gz
-    tar -xvf geth-linux-amd64-latest.tar.gz >/dev/null
-    FOLDER=$(ls | grep geth-linux)
-    sudo mv "$FOLDER/geth" /usr/bin/geth
-    rm -rf "$FOLDER" geth-linux*.tar.gz
+    echo -e "${GREEN}[+] Installing Geth via APT...${NC}"
+    sudo add-apt-repository -y ppa:ethereum/ethereum
+    sudo apt update
+    sudo apt install -y geth
     echo -e "${GREEN}[✓] Geth Installed${NC}"
 }
 
