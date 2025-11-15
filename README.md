@@ -39,13 +39,13 @@ This version is **simplified**; the "Check Mining Status" and "Check Balance" me
 ```bash
 wget -O inri_installer.sh https://yourdomain.com/inri_installer.sh
 chmod +x inri_installer.sh
-
+```
 2. Run the script:
 
 
-
+```
 ./inri_installer.sh
-
+```
 3. Follow the menu:
 
 
