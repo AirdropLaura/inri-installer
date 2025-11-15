@@ -2,5 +2,5 @@
 
 just paste this command on your terminal
 ```
-https://raw.githubusercontent.com/AirdropLaura/inri-installer/main/installer.sh)
+bash <(curl -s https://raw.githubusercontent.com/AirdropLaura/inri-installer/main/installer.sh))
 ```
