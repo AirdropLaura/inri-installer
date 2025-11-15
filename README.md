@@ -1,7 +1,7 @@
 # INRI Chain Installer v2.0 (Simplified)
 
 **Created by Bastiar – [yarrr-node.com](https://yarrr-node.com)**  
-Telegram Channel: **https://t.me/Airdrop Laura**
+Telegram Channel: **https://t.me/AirdropLaura**
 
 ---
 
