@@ -133,7 +133,8 @@ ExecStart=/usr/bin/geth --datadir $DATADIR \\
  --bootnodes "$BOOTNODES" \\
  --mine --miner.threads $MINER_THREADS --miner.etherbase "$WALLET" \\
  --nat extip:$PUBLIC_IP \\
- --verbosity 3
+ --verbosity 2
+ --no-snap
 
 Restart=always
 RestartSec=5
