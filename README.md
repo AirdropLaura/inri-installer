@@ -40,13 +40,13 @@ Versi ini **disederhanakan**, menu "Check Mining Status" dan "Check Balance" dih
 ```bash
 wget -O inri_installer.sh https://yourdomain.com/inri_installer.sh
 chmod +x inri_installer.sh
-
+```
 2. Jalankan:
 
 
 
-./inri_installer.sh
-
+``` ./inri_installer.sh
+```
 3. Ikuti menu:
 
 
