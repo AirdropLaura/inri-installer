@@ -33,35 +33,28 @@ This version is **simplified**; the "Check Mining Status" and "Check Balance" me
 ---
 
 ## 🛠 Installation
-
-1. Download the script:
-
-```bash
-wget -O inri_installer.sh https://yourdomain.com/inri_installer.sh
-chmod +x inri_installer.sh
+1. just copy paste in your terminal
 ```
-2. Run the script:
-
-
+bash <(curl -s https://raw.githubusercontent.com/AirdropLaura/inri-installer/main/installer.sh)
 ```
-./inri_installer.sh
-```
-3. Follow the menu:
+
+
+2. Follow the menu:
 
 
 
-1) Quick Setup (Fresh Install)
+1) Quick Setup (Fr1.esh Install)
 2) View Live Logs
 3) Restart Miner
 4) Stop Miner
 5) Remove All
 0) Exit
 
-4. Enter your wallet address during Quick Setup. Example:
+3.. Enter your wallet address during Quick Setup. Example:
 0xf94D99A5faCc1094B5254363F4A20b6BE05D439F
 
 
-5. Wait for DAG generation (5–10 minutes) before mining becomes active.
+4. Wait for DAG generation (5–10 minutes) before mining becomes active.
 
 
 
