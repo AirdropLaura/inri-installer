@@ -109,31 +109,32 @@ quick_setup() {
     [ $MINER_THREADS -lt 1 ] && MINER_THREADS=1
     PUBLIC_IP=$(curl -s ifconfig.me)
 
-    sudo tee /etc/systemd/system/inri-miner.service >/dev/null <<EOF
+sudo tee /etc/systemd/system/inri-miner.service >/dev/null <<EOF
 [Unit]
-Description=INRI Chain Miner (Geth 1.10.26)
+Description=INRI Chain Miner (Geth 1.10.26) - Clean Logs
 After=network.target
 
 [Service]
 User=root
 Type=simple
 
-ExecStart=/usr/bin/geth --datadir $DATADIR \\
- --networkid 3777 \\
- --syncmode full \\
- --gcmode archive \\
- --cache 2048 \\
- --maxpeers 50 \\
- --http --http.addr 127.0.0.1 --http.port 8545 \\
- --http.api eth,net,web3,miner,txpool,admin \\
- --http.corsdomain "localhost" --http.vhosts "localhost" \\
- --ws --ws.addr 127.0.0.1 --ws.port 8546 \\
- --ws.api eth,net,web3 \\
- --port 30303 \\
- --bootnodes "$BOOTNODES" \\
- --mine --miner.threads $MINER_THREADS --miner.etherbase "$WALLET" \\
- --nat extip:$PUBLIC_IP \\
- --verbosity 3
+# Redirect stderr (warnings) ke /dev/null, hanya stdout tampil
+ExecStart=/bin/bash -c '/usr/bin/geth --datadir $DATADIR \
+ --networkid 3777 \
+ --syncmode full \
+ --gcmode archive \
+ --cache 2048 \
+ --maxpeers 50 \
+ --http --http.addr 127.0.0.1 --http.port 8545 \
+ --http.api eth,net,web3,miner,txpool,admin \
+ --http.corsdomain "localhost" --http.vhosts "localhost" \
+ --ws --ws.addr 127.0.0.1 --ws.port 8546 \
+ --ws.api eth,net,web3 \
+ --port 30303 \
+ --bootnodes "$BOOTNODES" \
+ --mine --miner.threads $MINER_THREADS --miner.etherbase "$WALLET" \
+ --nat extip:$PUBLIC_IP \
+ --verbosity 2 2>/dev/null'
 
 Restart=always
 RestartSec=5
