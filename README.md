@@ -45,7 +45,8 @@ chmod +x inri_installer.sh
 
 
 
-``` ./inri_installer.sh
+```
+ ./inri_installer.sh
 ```
 3. Ikuti menu:
 
