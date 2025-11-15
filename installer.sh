@@ -43,13 +43,11 @@ quick_setup() {
     # 2. Install Geth 1.10.26
     echo -e "${GREEN}[2/7] Installing Geth 1.10.26...${NC}"
     
-    # Remove old Geth if exists
     sudo systemctl stop inri-miner 2>/dev/null
     sudo apt remove -y geth 2>/dev/null
     sudo apt autoremove -y >/dev/null 2>&1
     sudo add-apt-repository --remove ppa:ethereum/ethereum 2>/dev/null
     
-    # Download Geth 1.10.26
     cd /tmp
     wget -q --show-progress "$GETH_URL"
     tar -xzf geth-linux-amd64-1.10.26-e5eb32ac.tar.gz
@@ -69,7 +67,6 @@ quick_setup() {
     # 4. Init Blockchain
     echo -e "${GREEN}[4/7] Initializing Blockchain...${NC}"
     
-    # Backup old datadir if exists
     if [ -d "$DATADIR/geth" ]; then
         echo -e "${YELLOW}[~] Backing up old datadir...${NC}"
         mv "$DATADIR" "${DATADIR}.backup.$(date +%s)"
@@ -98,7 +95,6 @@ quick_setup() {
     echo -e "${YELLOW}Enter your wallet address (0x...):${NC}"
     read WALLET
     
-    # Validate wallet address
     if [[ ! $WALLET =~ ^0x[a-fA-F0-9]{40}$ ]]; then
         echo -e "${RED}[!] Invalid wallet address format!${NC}"
         echo -e "${RED}Setup failed. Please run again with valid address.${NC}"
@@ -108,12 +104,9 @@ quick_setup() {
     # 7. Create Miner Service
     echo -e "${GREEN}[7/7] Creating Miner Service...${NC}"
     
-    # Get CPU cores
     CPU_CORES=$(nproc)
     MINER_THREADS=$((CPU_CORES / 2))
     [ $MINER_THREADS -lt 1 ] && MINER_THREADS=1
-    
-    # Get public IP
     PUBLIC_IP=$(curl -s ifconfig.me)
 
     sudo tee /etc/systemd/system/inri-miner.service >/dev/null <<EOF
@@ -165,81 +158,10 @@ EOF
     echo ""
     echo -e "${YELLOW}⏳ DAG generation will take 5-10 minutes${NC}"
     echo -e "${YELLOW}📊 View logs: journalctl -fu inri-miner${NC}"
-    echo -e "${YELLOW}📈 Check status: Run this script again (menu 2)${NC}"
-    echo ""
 }
 
 logs_miner() {
     journalctl -fu inri-miner
-}
-
-check_status() {
-    echo -e "${BLUE}========= INRI Mining Status =========${NC}"
-    echo ""
-    
-    # Service status
-    if systemctl is-active --quiet inri-miner; then
-        echo -e "${GREEN}Service: RUNNING ✓${NC}"
-    else
-        echo -e "${RED}Service: STOPPED ✗${NC}"
-        echo ""
-        echo -e "${YELLOW}Run Quick Setup first (menu 1)${NC}"
-        return
-    fi
-    
-    echo ""
-    echo -e "${YELLOW}Fetching mining stats...${NC}"
-    echo ""
-    
-    # Mining stats
-    MINING=$(geth attach $DATADIR/geth.ipc --exec 'eth.mining' 2>/dev/null)
-    HASHRATE=$(geth attach $DATADIR/geth.ipc --exec 'eth.hashrate' 2>/dev/null)
-    PEERS=$(geth attach $DATADIR/geth.ipc --exec 'net.peerCount' 2>/dev/null)
-    BLOCK=$(geth attach $DATADIR/geth.ipc --exec 'eth.blockNumber' 2>/dev/null)
-    COINBASE=$(geth attach $DATADIR/geth.ipc --exec 'eth.coinbase' 2>/dev/null | tr -d '"')
-    
-    echo "Mining Active: $MINING"
-    echo "Hashrate: $HASHRATE H/s"
-    echo "Peers Connected: $PEERS"
-    echo "Current Block: $BLOCK"
-    echo "Miner Address: $COINBASE"
-    echo ""
-    
-    if [ "$COINBASE" != "null" ] && [ ! -z "$COINBASE" ]; then
-        BALANCE=$(geth attach $DATADIR/geth.ipc --exec "web3.fromWei(eth.getBalance('$COINBASE'), 'ether')" 2>/dev/null)
-        echo "Balance: $BALANCE INRI"
-    fi
-    
-    echo ""
-    echo "Sync Status:"
-    SYNCING=$(geth attach $DATADIR/geth.ipc --exec 'eth.syncing' 2>/dev/null)
-    if [ "$SYNCING" == "false" ]; then
-        echo -e "${GREEN}✓ Fully Synced${NC}"
-    else
-        echo "$SYNCING"
-    fi
-    
-    echo ""
-    echo -e "${BLUE}=======================================${NC}"
-}
-
-check_balance() {
-    echo -e "${YELLOW}Enter wallet address (0x...):${NC}"
-    read WALLET
-    
-    if [[ ! $WALLET =~ ^0x[a-fA-F0-9]{40}$ ]]; then
-        echo -e "${RED}[!] Invalid wallet address!${NC}"
-        return
-    fi
-    
-    echo ""
-    echo -e "${GREEN}Checking balance for:${NC}"
-    echo "$WALLET"
-    echo ""
-    
-    BALANCE=$(geth attach $DATADIR/geth.ipc --exec "web3.fromWei(eth.getBalance('$WALLET'), 'ether')" 2>/dev/null)
-    echo -e "${GREEN}Balance: $BALANCE INRI${NC}"
-    echo ""
 }
 
 restart_miner() {
@@ -296,24 +218,20 @@ menu() {
 banner
 echo -e "${BLUE}=============== MENU ===============${NC}"
 echo "1) Quick Setup (Fresh Install)"
-echo "2) Check Mining Status"
-echo "3) View Live Logs"
-echo "4) Check Balance"
-echo "5) Restart Miner"
-echo "6) Stop Miner"
-echo "7) Remove All"
+echo "2) View Live Logs"
+echo "3) Restart Miner"
+echo "4) Stop Miner"
+echo "5) Remove All"
 echo "0) Exit"
 echo -e "${BLUE}====================================${NC}"
 read -p "Choose: " CH
 
 case $CH in
 1) quick_setup ;;
-2) check_status ;;
-3) logs_miner ;;
-4) check_balance ;;
-5) restart_miner ;;
-6) stop_miner ;;
-7) remove_all ;;
+2) logs_miner ;;
+3) restart_miner ;;
+4) stop_miner ;;
+5) remove_all ;;
 0) exit ;;
 *) echo "Invalid option";;
 esac
