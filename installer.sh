@@ -119,7 +119,7 @@ User=root
 Type=simple
 
 # Redirect stderr (warnings) ke /dev/null, hanya stdout tampil
-ExecStart=/bin/bash -c '/usr/bin/geth --datadir $DATADIR \
+ExecStart=/usr/bin/geth --datadir $DATADIR \
  --networkid 3777 \
  --syncmode full \
  --gcmode archive \
@@ -134,7 +134,7 @@ ExecStart=/bin/bash -c '/usr/bin/geth --datadir $DATADIR \
  --bootnodes "$BOOTNODES" \
  --mine --miner.threads $MINER_THREADS --miner.etherbase "$WALLET" \
  --nat extip:$PUBLIC_IP \
- --verbosity 2 2>/dev/null'
+ --verbosity 3
 
 Restart=always
 RestartSec=5
