@@ -3,7 +3,7 @@
 Public RPC • Mining • Full Node • Auto Installer  
 created by **bastiar**  
 Website: https://yarrr-node.com  
-Telegram: **@AirdropLaura**
+Telegram: **https://t.me/AirdropLaura**
 
 ---
 
