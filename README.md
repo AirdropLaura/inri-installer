@@ -1,146 +1,176 @@
-# INRI Chain Installer v2.0 (Simplified)
 
-**Created by Bastiar – [yarrr-node.com](https://yarrr-node.com)**  
-Telegram Channel: **https://t.me/AirdropLaura**
-
----
-
-## 📌 Description
-
-INRI Installer v2.0 is an all-in-one bash script for:
-
-- Installing **Geth 1.10.26** with **Full PoW support**
-- Initializing the **INRI Chain** blockchain
-- Automatically configuring the miner with your wallet address
-- Setting up firewall & network
-- Easily starting/stopping/restarting the miner
-- Viewing live logs
-- Removing all data and services with a single command
-
-This version is **simplified**; the "Check Mining Status" and "Check Balance" menus have been removed to avoid `too many arguments` errors.
+# INRI Chain — Installer & Mining Hub  
+Public RPC • Mining • Full Node • Auto Installer  
+created by **bastiar**  
+Website: https://yarrr-node.com  
+Telegram: **@AirdropLaura**
 
 ---
 
-## ⚡ Features
+## 🔥 Quick Install (One Command)
 
-- Quick Setup (Fresh Install)
-- Automatic Miner Service
-- Live logs monitoring
-- Restart / Stop Miner
-- Remove All (Data, Service, Genesis)
-- Firewall and port 30303 TCP/UDP automatically configured
+Run this command on your VPS / Linux server:
 
----
-
-## 🛠 Installation
-1. just copy paste in your terminal
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/AirdropLaura/inri-installer/main/installer.sh)
 ```
-bash <(curl -s https://raw.githubusercontent.com/AirdropLaura/inri-installer/main/installer.sh)
-```
+This will launch the interactive installer menu:
 
-
-2. Follow the menu:
-
-
-
-1) Quick Setup (Fr1.esh Install)
-2) View Live Logs
-3) Restart Miner
-4) Stop Miner
-5) Remove All
+1) Quick Install INRI Node
+2) Uninstall Node
+3) Check Logs
+4) Restart Node
+5) Stop Node
 0) Exit
 
-3.. Enter your wallet address during Quick Setup. Example:
-0xf94D99A5faCc1094B5254363F4A20b6BE05D439F
+
+---
+
+🚀 Installer Features
+
+✅ 1. Quick Install (Fully Automated)
+
+The installer will automatically:
+
+Install geth v1.10.26
+
+Download genesis.json
+
+Initialize the INRI chain data directory
+
+Configure mining:
+
+4 miner threads
+
+1 official INRI bootnode
 
 
-4. Wait for DAG generation (5–10 minutes) before mining becomes active.
+Create & enable systemd service: inri-geth
+
+Auto-start node on reboot
+
+
+Only one input required:
+
+Wallet Address (0x...) — used as miner.etherbase
+
+
+
+---
+
+✅ 2. Uninstall Node
+
+This option will:
+
+Stop and disable the inri-geth systemd service
+
+Remove the systemd service file
+
+Optionally delete:
+
+~/inri/ data directory
+
+genesis.json
 
 
 
 
 ---
 
-🔌 Menu Description
+✅ 3. Check Logs
 
-Menu	Function
+Live node monitoring:
+```
+journalctl -fu inri-geth
+```
 
-1	Quick Setup – Install node, initialize blockchain, setup miner
-2	View Live Logs – Run journalctl -fu inri-miner
-3	Restart Miner – Restart the miner service
-4	Stop Miner – Stop and disable the miner service
-5	Remove All – Delete service, blockchain, and genesis file
-0	Exit – Exit the installer
+---
+
+✅ 4. Restart Node
+```
+systemctl restart inri-geth
+```
+
+---
+
+✅ 5. Stop Node
+```
+systemctl stop inri-geth
+```
+
+---
+
+🌐 INRI Chain Network Information
+
+Parameter	Value
+
+Chain ID	3777
+Currency	INRI
+RPC	https://rpc.inri.life
+Explorer	https://explorer.inri.life
+EVM Compatible	Yes
+CORS Enabled	Yes
+
+
+Bootnode
+
+enode://5c7c744a9ac53fdb9e529743208ebd123f11c73d973aa2cf653f3ac1bdf460b6f2a9b2aec23b8f2b9d692d8c898fe0e93dac8d7533db8926924e770969f3a46a@134.199.203.8:30303
+
+
+---
+
+📂 Node Directory Structure
+
+~/inri/
+   ├── geth/
+   ├── keystore/
+   └── genesis.json
+
+
+---
+
+🧪 Tested & Verified On
+
+Operating System	Status
+
+Ubuntu 20.04	✔️
+Ubuntu 22.04	✔️
+Debian 11	✔️
+KVM / Cloud VPS	✔️
 
 
 
 ---
 
-💻 Minimum Node Requirements
+🛠 Requirements
 
-Component	Minimum
+The installer automatically installs everything needed:
 
-CPU	2 cores (1 core for mining)
-RAM	4 GB
-Storage	100 GB SSD
-Network	10 Mbps
-OS	Ubuntu 20.04 / Debian 11
+curl
 
+systemd
 
-> Mining on minimum specs will be slow, suitable for testing / development nodes.
-
+geth v1.10.26 (downloaded directly)
 
 
 
 ---
 
-🚀 Recommended Node Requirements
+✨ Credits
 
-Component	Recommended
-
-CPU	4–8 cores (more cores = higher hashrate)
-RAM	8–16 GB
-Storage	250–500 GB SSD NVMe
-Network	50+ Mbps
-OS	Ubuntu 20.04 / Debian 11
+> Script created by bastiar
+Website: https://yarrr-node.com
+Telegram: @AirdropLaura
 
 
-> Mining will be more stable, DAG generation faster, and synchronization quicker.
 
-
+Feel free to contact me if you need support or feature enhancements.
 
 
 ---
 
-⚠️ Tips
+⭐ Support the Project
 
-Use an SSD to avoid I/O bottlenecks
+If this project helps you, please consider giving the repository a ⭐ Star on GitHub!
 
-Do not allocate all cores to mining; leave 1–2 cores for the OS
-
-Ensure port 30303 TCP/UDP is open so the node can connect to peers
-
-For RAM < 8 GB, use 4–8 GB swap to prevent crashes during DAG generation
-
-For monitoring, run journalctl -fu inri-miner or check systemctl status inri-miner
-
-
-
----
-
-📌 Disclaimer
-
-This script is made for the INRI Chain network only. Not for Ethereum mainnet or other networks.
-Use at your own risk. The author is not responsible for any losses due to hardware configuration or mining.
-
-
----
-
-📞 Contact
-
-Website: yarrr-node.com
-
-Telegram Channel: Airdrop Laura
-
-
----
+.
