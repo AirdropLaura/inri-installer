@@ -121,8 +121,7 @@ ExecStart=/usr/bin/geth --datadir $DATADIR \
  --miner.gastarget 30000000 \
  --nat extip:$PUBLIC_IP \
  --verbosity 3 \
- --ipcpath $DATADIR/geth.ipc \
- --ipc
+ --ipcpath $DATADIR/geth.ipc
 
 Restart=always
 RestartSec=5
