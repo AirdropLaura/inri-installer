@@ -82,10 +82,10 @@ install_inri() {
     apt-get install -y curl software-properties-common
 
     ########################################
-    # BAGIAN GETH DI-UPDATE DI SINI
+    # INSTALL GETH VERSI LAMA (PUNYA miner.threads)
     ########################################
-    # Versi Geth yang masih tersedia di gethstore
-    GETH_VERSION="1.12.0-e501b3b0"
+    # Versi Geth yang masih ada MINER OPTIONS + miner.threads
+    GETH_VERSION="1.10.15-8be800ff"
     GETH_TAR="geth-linux-amd64-${GETH_VERSION}.tar.gz"
     GETH_URL="https://gethstore.blob.core.windows.net/builds/${GETH_TAR}"
 
@@ -97,7 +97,7 @@ install_inri() {
 
     cd /usr/local/bin
 
-    # Download binary Geth baru
+    # Download binary Geth
     curl -fSLo "${GETH_TAR}" "${GETH_URL}"
 
     # Ekstrak
@@ -117,7 +117,7 @@ install_inri() {
 
     cd - >/dev/null
     ########################################
-    # AKHIR BAGIAN UPDATE GETH
+    # AKHIR BAGIAN INSTALL GETH
     ########################################
 
     echo "[3/5] Download genesis.json..."
