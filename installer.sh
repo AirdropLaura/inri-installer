@@ -54,21 +54,44 @@ install_inri() {
     apt-get update -y
     apt-get install -y curl software-properties-common
 
-    echo "[2/5] Install geth v1.10.26..."
+    ########################################
+    # BAGIAN GETH DI-UPDATE DI SINI
+    ########################################
+    # Versi Geth yang masih tersedia di gethstore
+    GETH_VERSION="1.12.0-e501b3b0"
+    GETH_TAR="geth-linux-amd64-${GETH_VERSION}.tar.gz"
+    GETH_URL="https://gethstore.blob.core.windows.net/builds/${GETH_TAR}"
+
+    echo "[2/5] Install geth v${GETH_VERSION}..."
     if command -v geth &>/dev/null; then
         apt-get remove -y geth || true
+        rm -f /usr/local/bin/geth || true
     fi
 
     cd /usr/local/bin
-    curl -fSLo geth.tar.gz https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.10.26.tar.gz
-    tar -xvf geth.tar.gz
-    rm -f geth.tar.gz
 
-    GETH_DIR=$(find . -maxdepth 1 -type d -name "geth-linux-amd64-1.10.26*" | head -n 1)
-    cp "$GETH_DIR/geth" /usr/local/bin/geth
+    # Download binary Geth baru
+    curl -fSLo "${GETH_TAR}" "${GETH_URL}"
+
+    # Ekstrak
+    tar -xvf "${GETH_TAR}"
+    rm -f "${GETH_TAR}"
+
+    # Cari folder hasil ekstrak dan copy binary geth
+    GETH_DIR=$(find . -maxdepth 1 -type d -name "geth-linux-amd64-${GETH_VERSION}*" | head -n 1)
+    if [[ -z "$GETH_DIR" ]]; then
+        echo "Folder Geth tidak ditemukan setelah ekstrak!"
+        exit 1
+    fi
+
+    cp "${GETH_DIR}/geth" /usr/local/bin/geth
     chmod +x /usr/local/bin/geth
-    rm -rf "$GETH_DIR"
+    rm -rf "${GETH_DIR}"
+
     cd - >/dev/null
+    ########################################
+    # AKHIR BAGIAN UPDATE GETH
+    ########################################
 
     echo "[3/5] Download genesis.json..."
     sudo -u "$LNXUSER" mkdir -p "$DATADIR"
