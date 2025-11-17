@@ -36,19 +36,46 @@ install_inri() {
 
     DATADIR="$USER_HOME/inri"
     GENESIS_PATH="$USER_HOME/genesis.json"
-    THREADS=4
+
+    # Default threads miner
+    DEFAULT_THREADS=4
 
     echo
     echo "User Linux   : $LNXUSER"
     echo "Data dir     : $DATADIR"
-    echo "Threads      : $THREADS"
     echo
 
+    # Input wallet
     read -rp "Masukkan wallet address (0x...): " WALLET
     if [[ ! "$WALLET" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
       echo "Wallet address tidak valid."
       exit 1
     fi
+
+    # Input jumlah threads (boleh Enter untuk default)
+    read -rp "Masukkan jumlah threads miner (default ${DEFAULT_THREADS}): " THREADS_INPUT
+
+    if [[ -z "$THREADS_INPUT" ]]; then
+        THREADS="$DEFAULT_THREADS"
+        echo "Threads miner menggunakan default: $THREADS"
+    else
+        if ! [[ "$THREADS_INPUT" =~ ^[0-9]+$ ]]; then
+            echo "Input threads harus berupa angka."
+            exit 1
+        fi
+        if (( THREADS_INPUT <= 0 )); then
+            echo "Threads harus lebih besar dari 0."
+            exit 1
+        fi
+        THREADS="$THREADS_INPUT"
+        echo "Threads miner diset ke: $THREADS"
+    fi
+
+    echo
+    echo "Konfigurasi akhir:"
+    echo "  Wallet  : $WALLET"
+    echo "  Threads : $THREADS"
+    echo
 
     echo "[1/5] Update dependensi..."
     apt-get update -y
