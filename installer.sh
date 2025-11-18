@@ -11,19 +11,27 @@ set -e
 ### FUNCTIONS
 ### ============================
 
-# =======================
-# FUNGSI CEK & PILIH PORT
-# =======================
-
+# Fungsi umum untuk cari port kosong
+# Argumen: preferred_port, start_range, end_range
 get_free_port() {
-    local START_PORT=$1
-    local END_PORT=$2
+    local PREFERRED=$1
+    local START_PORT=$2
+    local END_PORT=$3
+
+    # Coba pakai port preferred dulu
+    if ! lsof -i :"$PREFERRED" >/dev/null 2>&1; then
+        echo "$PREFERRED"
+        return
+    fi
+
+    # Kalau bentrok, scan range
     for ((port=$START_PORT; port<=$END_PORT; port++)); do
         if ! lsof -i :"$port" >/dev/null 2>&1; then
             echo "$port"
             return
         fi
     done
+
     echo ""
 }
 
@@ -43,18 +51,15 @@ install_inri() {
     fi
 
     LNXUSER="${SUDO_USER:-$USER}"
+    USER_HOME=$(eval echo "~$LNXUSER")
 
-# Cek apakah user valid, jika tidak (misal environment Jupyter/Docker), fallback ke root
-if ! id "$LNXUSER" &>/dev/null; then
-    echo "[WARN] User Linux '$LNXUSER' tidak ditemukan. Fallback ke root."
-    LNXUSER="root"
-fi
-
-USER_HOME=$(eval echo "~$LNXUSER")
+    if ! id "$LNXUSER" &>/dev/null; then
+      echo "User Linux tidak ditemukan!"
+      exit 1
+    fi
 
     DATADIR="$USER_HOME/inri"
     GENESIS_PATH="$USER_HOME/genesis.json"
-
     DEFAULT_THREADS=4
 
     echo
@@ -62,78 +67,68 @@ USER_HOME=$(eval echo "~$LNXUSER")
     echo "Data dir     : $DATADIR"
     echo
 
+    # Input wallet
     read -rp "Masukkan wallet address (0x...): " WALLET
     if [[ ! "$WALLET" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
       echo "Wallet address tidak valid."
       exit 1
     fi
 
+    # Input threads
     read -rp "Masukkan jumlah threads miner (default ${DEFAULT_THREADS}): " THREADS_INPUT
-
     if [[ -z "$THREADS_INPUT" ]]; then
         THREADS="$DEFAULT_THREADS"
+        echo "Threads miner menggunakan default: $THREADS"
     else
         if ! [[ "$THREADS_INPUT" =~ ^[0-9]+$ ]]; then
             echo "Input threads harus berupa angka."
             exit 1
         fi
+        if (( THREADS_INPUT <= 0 )); then
+            echo "Threads harus lebih besar dari 0."
+            exit 1
+        fi
         THREADS="$THREADS_INPUT"
+        echo "Threads miner diset ke: $THREADS"
     fi
 
     echo
     echo "=============================================="
-    echo "      AUTO DETECT P2P PORT (30303)"
+    echo "        AUTO DETECT SEMUA PORT GETH"
     echo "=============================================="
 
-    # Cek apakah port 30303 sedang digunakan
-    if lsof -i :30303 >/dev/null 2>&1; then
-        echo "[INFO] Port 30303 BENTROK, mencari port bebas..."
-
-        FREE_PORT=$(get_free_port 30310 30400)
-
-        if [[ -z "$FREE_PORT" ]]; then
-            echo "[ERROR] Tidak ada port bebas antara 30310–30400"
-            exit 1
-        fi
-
-        echo "[OK] Port bebas ditemukan: ${FREE_PORT}"
-        P2P_PORT="$FREE_PORT"
-    else
-        echo "[OK] Port 30303 tidak dipakai. Menggunakan port default."
-        P2P_PORT=30303
+    # P2P port (default 30303, range 30304–30500)
+    P2P_PORT=$(get_free_port 30303 30304 30500)
+    if [[ -z "$P2P_PORT" ]]; then
+        echo "[ERROR] Tidak menemukan P2P port bebas di range 30303–30500"
+        exit 1
     fi
+    echo "[INFO] P2P port digunakan: $P2P_PORT"
 
-    echo "[INFO] P2P port yang digunakan: $P2P_PORT"
-    echo
-
-    echo "=============================================="
-    echo "      AUTO DETECT RPC PORT (8545)"
-    echo "=============================================="
-
-    if lsof -i :8545 >/dev/null 2>&1; then
-        echo "[INFO] Port 8545 BENTROK, mencari port bebas..."
-
-        FREE_RPC=$(get_free_port 8600 8700)
-
-        if [[ -z "$FREE_RPC" ]]; then
-            echo "[ERROR] Tidak ada port RPC bebas antara 8600–8700"
-            exit 1
-        fi
-
-        echo "[OK] RPC port bebas ditemukan: ${FREE_RPC}"
-        RPC_PORT="$FREE_RPC"
-    else
-        echo "[OK] Port 8545 aman, menggunakan default."
-        RPC_PORT=8545
+    # HTTP RPC port (default 8545, range 8546–8600)
+    HTTP_PORT=$(get_free_port 8545 8546 8600)
+    if [[ -z "$HTTP_PORT" ]]; then
+        echo "[ERROR] Tidak menemukan HTTP port bebas di range 8545–8600"
+        exit 1
     fi
+    echo "[INFO] HTTP RPC port digunakan: $HTTP_PORT"
 
-    echo "[INFO] RPC port yang digunakan: $RPC_PORT"
+    # WS port (default 8546, range 8700–8800)
+    WS_PORT=$(get_free_port 8546 8700 8800)
+    if [[ -z "$WS_PORT" ]]; then
+        echo "[ERROR] Tidak menemukan WS port bebas di range 8546–8800"
+        exit 1
+    fi
+    echo "[INFO] WebSocket port digunakan: $WS_PORT"
     echo
 
     echo "[1/5] Update dependensi..."
     apt-get update -y
-    apt-get install -y curl software-properties-common
+    apt-get install -y curl software-properties-common lsof
 
+    ########################################
+    # INSTALL GETH VERSI LAMA (PUNYA miner.threads)
+    ########################################
     GETH_VERSION="1.10.15-8be800ff"
     GETH_TAR="geth-linux-amd64-${GETH_VERSION}.tar.gz"
     GETH_URL="https://gethstore.blob.core.windows.net/builds/${GETH_TAR}"
@@ -151,7 +146,7 @@ USER_HOME=$(eval echo "~$LNXUSER")
 
     GETH_DIR=$(find . -maxdepth 1 -type d -name "geth-linux-amd64-${GETH_VERSION}*" | head -n 1)
     if [[ -z "$GETH_DIR" ]]; then
-        echo "Folder Geth tidak ditemukan!"
+        echo "Folder Geth tidak ditemukan setelah ekstrak!"
         exit 1
     fi
 
@@ -183,10 +178,10 @@ ExecStart=/usr/local/bin/geth \\
  --datadir "$DATADIR" \\
  --networkid 3777 --port $P2P_PORT \\
  --syncmode full --cache 1024 \\
- --http --http.addr 0.0.0.0 --http.port $RPC_PORT \\
+ --http --http.addr 0.0.0.0 --http.port $HTTP_PORT \\
  --http.api eth,net,web3,miner,txpool,admin \\
  --http.corsdomain "*" --http.vhosts "*" \\
- --ws --ws.addr 0.0.0.0 --ws.port 8546 --ws.api eth,net,web3 \\
+ --ws --ws.addr 0.0.0.0 --ws.port $WS_PORT --ws.api eth,net,web3 \\
  --bootnodes "enode://5c7c744a9ac53fdb9e529743208ebd123f11c73d973aa2cf653f3ac1bdf460b6f2a9b2aec23b8f2b9d692d8c898fe0e93dac8d7533db8926924e770969f3a46a@134.199.203.8:30303" \\
  --mine --miner.threads $THREADS --miner.etherbase $WALLET
 
@@ -199,12 +194,14 @@ EOF
     systemctl restart inri-geth.service
 
     echo "[5/5] Selesai!"
-    echo "Node Anda berjalan:"
-    echo " - P2P Port : $P2P_PORT"
-    echo " - RPC Port : $RPC_PORT"
+    echo "Node INRI berjalan dengan konfigurasi:"
+    echo "  P2P Port  : $P2P_PORT"
+    echo "  HTTP Port : $HTTP_PORT"
+    echo "  WS Port   : $WS_PORT"
 }
 
 uninstall_inri() {
+    echo "Menghentikan service..."
     systemctl stop inri-geth.service || true
     systemctl disable inri-geth.service || true
     rm -f /etc/systemd/system/inri-geth.service
@@ -212,7 +209,11 @@ uninstall_inri() {
 
     echo "Hapus folder node? (y/N)"
     read -r REMOVE_DATA
-    [[ "${REMOVE_DATA,,}" == "y" ]] && rm -rf ~/inri ~/genesis.json
+    if [[ "${REMOVE_DATA,,}" == "y" ]]; then
+        rm -rf ~/inri ~/genesis.json
+        echo "Data node dihapus."
+    fi
+
     echo "Uninstall selesai."
 }
 
@@ -231,7 +232,7 @@ stop_node() {
 }
 
 ### ============================
-### MENU UTAMA
+### MENU
 ### ============================
 
 while true; do
