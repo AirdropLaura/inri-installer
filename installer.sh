@@ -43,12 +43,14 @@ install_inri() {
     fi
 
     LNXUSER="${SUDO_USER:-$USER}"
-    USER_HOME=$(eval echo "~$LNXUSER")
 
-    if ! id "$LNXUSER" &>/dev/null; then
-      echo "User Linux tidak ditemukan!"
-      exit 1
-    fi
+# Cek apakah user valid, jika tidak (misal environment Jupyter/Docker), fallback ke root
+if ! id "$LNXUSER" &>/dev/null; then
+    echo "[WARN] User Linux '$LNXUSER' tidak ditemukan. Fallback ke root."
+    LNXUSER="root"
+fi
+
+USER_HOME=$(eval echo "~$LNXUSER")
 
     DATADIR="$USER_HOME/inri"
     GENESIS_PATH="$USER_HOME/genesis.json"
