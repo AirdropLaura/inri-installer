@@ -104,6 +104,30 @@ install_inri() {
     echo "[INFO] P2P port yang digunakan: $P2P_PORT"
     echo
 
+    echo "=============================================="
+    echo "      AUTO DETECT RPC PORT (8545)"
+    echo "=============================================="
+
+    if lsof -i :8545 >/dev/null 2>&1; then
+        echo "[INFO] Port 8545 BENTROK, mencari port bebas..."
+
+        FREE_RPC=$(get_free_port 8600 8700)
+
+        if [[ -z "$FREE_RPC" ]]; then
+            echo "[ERROR] Tidak ada port RPC bebas antara 8600–8700"
+            exit 1
+        fi
+
+        echo "[OK] RPC port bebas ditemukan: ${FREE_RPC}"
+        RPC_PORT="$FREE_RPC"
+    else
+        echo "[OK] Port 8545 aman, menggunakan default."
+        RPC_PORT=8545
+    fi
+
+    echo "[INFO] RPC port yang digunakan: $RPC_PORT"
+    echo
+
     echo "[1/5] Update dependensi..."
     apt-get update -y
     apt-get install -y curl software-properties-common
@@ -157,7 +181,7 @@ ExecStart=/usr/local/bin/geth \\
  --datadir "$DATADIR" \\
  --networkid 3777 --port $P2P_PORT \\
  --syncmode full --cache 1024 \\
- --http --http.addr 0.0.0.0 --http.port 8545 \\
+ --http --http.addr 0.0.0.0 --http.port $RPC_PORT \\
  --http.api eth,net,web3,miner,txpool,admin \\
  --http.corsdomain "*" --http.vhosts "*" \\
  --ws --ws.addr 0.0.0.0 --ws.port 8546 --ws.api eth,net,web3 \\
@@ -173,7 +197,9 @@ EOF
     systemctl restart inri-geth.service
 
     echo "[5/5] Selesai!"
-    echo "Node Anda berjalan dengan port P2P: $P2P_PORT"
+    echo "Node Anda berjalan:"
+    echo " - P2P Port : $P2P_PORT"
+    echo " - RPC Port : $RPC_PORT"
 }
 
 uninstall_inri() {
