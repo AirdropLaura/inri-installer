@@ -11,6 +11,22 @@ set -e
 ### FUNCTIONS
 ### ============================
 
+# =======================
+# FUNGSI CEK & PILIH PORT
+# =======================
+
+get_free_port() {
+    local START_PORT=$1
+    local END_PORT=$2
+    for ((port=$START_PORT; port<=$END_PORT; port++)); do
+        if ! lsof -i :"$port" >/dev/null 2>&1; then
+            echo "$port"
+            return
+        fi
+    done
+    echo ""
+}
+
 install_inri() {
     echo "=============================================="
     echo "      INRI Chain Miner Auto Installer"
@@ -37,7 +53,6 @@ install_inri() {
     DATADIR="$USER_HOME/inri"
     GENESIS_PATH="$USER_HOME/genesis.json"
 
-    # Default threads miner
     DEFAULT_THREADS=4
 
     echo
@@ -45,46 +60,54 @@ install_inri() {
     echo "Data dir     : $DATADIR"
     echo
 
-    # Input wallet
     read -rp "Masukkan wallet address (0x...): " WALLET
     if [[ ! "$WALLET" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
       echo "Wallet address tidak valid."
       exit 1
     fi
 
-    # Input jumlah threads (boleh Enter untuk default)
     read -rp "Masukkan jumlah threads miner (default ${DEFAULT_THREADS}): " THREADS_INPUT
 
     if [[ -z "$THREADS_INPUT" ]]; then
         THREADS="$DEFAULT_THREADS"
-        echo "Threads miner menggunakan default: $THREADS"
     else
         if ! [[ "$THREADS_INPUT" =~ ^[0-9]+$ ]]; then
             echo "Input threads harus berupa angka."
             exit 1
         fi
-        if (( THREADS_INPUT <= 0 )); then
-            echo "Threads harus lebih besar dari 0."
-            exit 1
-        fi
         THREADS="$THREADS_INPUT"
-        echo "Threads miner diset ke: $THREADS"
     fi
 
     echo
-    echo "Konfigurasi akhir:"
-    echo "  Wallet  : $WALLET"
-    echo "  Threads : $THREADS"
+    echo "=============================================="
+    echo "      AUTO DETECT P2P PORT (30303)"
+    echo "=============================================="
+
+    # Cek apakah port 30303 sedang digunakan
+    if lsof -i :30303 >/dev/null 2>&1; then
+        echo "[INFO] Port 30303 BENTROK, mencari port bebas..."
+
+        FREE_PORT=$(get_free_port 30310 30400)
+
+        if [[ -z "$FREE_PORT" ]]; then
+            echo "[ERROR] Tidak ada port bebas antara 30310–30400"
+            exit 1
+        fi
+
+        echo "[OK] Port bebas ditemukan: ${FREE_PORT}"
+        P2P_PORT="$FREE_PORT"
+    else
+        echo "[OK] Port 30303 tidak dipakai. Menggunakan port default."
+        P2P_PORT=30303
+    fi
+
+    echo "[INFO] P2P port yang digunakan: $P2P_PORT"
     echo
 
     echo "[1/5] Update dependensi..."
     apt-get update -y
     apt-get install -y curl software-properties-common
 
-    ########################################
-    # INSTALL GETH VERSI LAMA (PUNYA miner.threads)
-    ########################################
-    # Versi Geth yang masih ada MINER OPTIONS + miner.threads
     GETH_VERSION="1.10.15-8be800ff"
     GETH_TAR="geth-linux-amd64-${GETH_VERSION}.tar.gz"
     GETH_URL="https://gethstore.blob.core.windows.net/builds/${GETH_TAR}"
@@ -96,29 +119,20 @@ install_inri() {
     fi
 
     cd /usr/local/bin
-
-    # Download binary Geth
     curl -fSLo "${GETH_TAR}" "${GETH_URL}"
-
-    # Ekstrak
     tar -xvf "${GETH_TAR}"
     rm -f "${GETH_TAR}"
 
-    # Cari folder hasil ekstrak dan copy binary geth
     GETH_DIR=$(find . -maxdepth 1 -type d -name "geth-linux-amd64-${GETH_VERSION}*" | head -n 1)
     if [[ -z "$GETH_DIR" ]]; then
-        echo "Folder Geth tidak ditemukan setelah ekstrak!"
+        echo "Folder Geth tidak ditemukan!"
         exit 1
     fi
 
     cp "${GETH_DIR}/geth" /usr/local/bin/geth
     chmod +x /usr/local/bin/geth
     rm -rf "${GETH_DIR}"
-
     cd - >/dev/null
-    ########################################
-    # AKHIR BAGIAN INSTALL GETH
-    ########################################
 
     echo "[3/5] Download genesis.json..."
     sudo -u "$LNXUSER" mkdir -p "$DATADIR"
@@ -141,7 +155,7 @@ Restart=on-failure
 RestartSec=10
 ExecStart=/usr/local/bin/geth \\
  --datadir "$DATADIR" \\
- --networkid 3777 --port 30303 \\
+ --networkid 3777 --port $P2P_PORT \\
  --syncmode full --cache 1024 \\
  --http --http.addr 0.0.0.0 --http.port 8545 \\
  --http.api eth,net,web3,miner,txpool,admin \\
@@ -159,11 +173,10 @@ EOF
     systemctl restart inri-geth.service
 
     echo "[5/5] Selesai!"
-    echo "Node Anda telah berjalan sebagai service: inri-geth"
+    echo "Node Anda berjalan dengan port P2P: $P2P_PORT"
 }
 
 uninstall_inri() {
-    echo "Menghentikan service..."
     systemctl stop inri-geth.service || true
     systemctl disable inri-geth.service || true
     rm -f /etc/systemd/system/inri-geth.service
@@ -171,12 +184,7 @@ uninstall_inri() {
 
     echo "Hapus folder node? (y/N)"
     read -r REMOVE_DATA
-
-    if [[ "${REMOVE_DATA,,}" == "y" ]]; then
-        rm -rf ~/inri ~/genesis.json
-        echo "Data node dihapus."
-    fi
-
+    [[ "${REMOVE_DATA,,}" == "y" ]] && rm -rf ~/inri ~/genesis.json
     echo "Uninstall selesai."
 }
 
@@ -195,7 +203,7 @@ stop_node() {
 }
 
 ### ============================
-### MENU
+### MENU UTAMA
 ### ============================
 
 while true; do
